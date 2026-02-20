@@ -6,6 +6,12 @@ const SETTINGS_KEY = "drj_settings_v1";
 
 function $(id){ return document.getElementById(id); }
 
+function setText(id, value){
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
+function exists(id){ return !!document.getElementById(id); }
+
 function loadSettings(){
   try{
     const raw = localStorage.getItem(SETTINGS_KEY);
@@ -445,7 +451,7 @@ function wireControls(){
 
 async function refresh(){
   try{
-    $("updated").textContent = "Updating…";
+    setText("updated","Updating…");
     const s = loadSettings();
     const loc = (s.mode === "boat")
       ? {lat: clamp(s.boatLat, -90, 90), lon: clamp(s.boatLon, -180, 180), name: s.boatName || "Boat point"}
@@ -453,7 +459,7 @@ async function refresh(){
 
     // Water temp
     const wt = await getWaterTemp();
-    $("waterTemp").textContent = (typeof wt.tempF === "number") ? `${wt.tempF}°F` : "—";
+    setText(exists("waterTemp")?"waterTemp":"temp", (typeof wt.tempF === "number") ? `${wt.tempF}°F` : "—");
     // Air temp will come from AM median temp for now (as in original)
     // Wind / weather
     const ww = await getWindWeather(loc);
@@ -463,14 +469,14 @@ async function refresh(){
     if (ws) ws.textContent = ww.stationName;
 
     // Fill AM/PM
-    $("windAM").textContent = ww.am.wind;
-    $("wxAM").textContent = ww.am.wx;
-    $("pcpAM").textContent = (typeof ww.am.precip === "number") ? `${ww.am.precip}%` : "—";
-    $("windPM").textContent = ww.pm.wind;
-    $("wxPM").textContent = ww.pm.wx;
-    $("pcpPM").textContent = (typeof ww.pm.precip === "number") ? `${ww.pm.precip}%` : "—";
+    setText("windAM", = ww.am.wind;
+    setText("wxAM", = ww.am.wx;
+    setText("pcpAM", = (typeof ww.am.precip === "number") ? `${ww.am.precip}%` : "—";
+    setText("windPM", = ww.pm.wind;
+    setText("wxPM", = ww.pm.wx;
+    setText("pcpPM", = (typeof ww.pm.precip === "number") ? `${ww.pm.precip}%` : "—";
     // Air temp from AM median temp
-    $("airTemp").textContent = ww.am.temp || "—";
+    setText("airTemp", ww.am.temp || "—");
 
     // window times + dates if present
     const w = ww.windows;
@@ -491,8 +497,8 @@ async function refresh(){
     const turbidityNTU = firstValue(turbJson);
     const dischargeCFS = firstValue(flowJson);
 
-    $("turbidity").textContent = (typeof turbidityNTU === "number") ? `${turbidityNTU.toFixed(1)} NTU` : "—";
-    $("discharge").textContent = (typeof dischargeCFS === "number") ? `${Math.round(dischargeCFS).toLocaleString()} cfs` : "—";
+    setText(exists("turbidity")?"turbidity":"turb", (typeof turbidityNTU === "number") ? `${turbidityNTU.toFixed(1)} NTU` : "—");
+    setText(exists("discharge")?"discharge":"flow", (typeof dischargeCFS === "number") ? `${Math.round(dischargeCFS).toLocaleString()} cfs` : "—");
     const interp = interpretTurbidity(turbidityNTU);
     $("clarityStatus").textContent = interp.status;
     $("clarityMeaning").textContent = interp.meaning;
@@ -518,9 +524,9 @@ async function refresh(){
     const ts = document.getElementById("tempSource");
     if (ts) ts.textContent = `Water: ${wt.source} • Wind/Precip: NWS hourly via api.weather.gov`;
 
-    $("updated").textContent = `Updated: ${new Date().toLocaleString()}`;
+    setText("updated", `Updated: ${new Date().toLocaleString()}`);
   }catch(err){
-    $("updated").textContent = "Error: " + (err?.message || String(err));
+    setText("updated", "Error: " + (err?.message || String(err)));
   }
 }
 
@@ -528,7 +534,7 @@ $("refresh")?.addEventListener("click", refresh);
 window.addEventListener("load", ()=>{
   // show build tag if present
   const b = document.getElementById("buildTag");
-  if (b) b.textContent = "20260220222343";
+  if (b) b.textContent = "20260220223726";
   wireControls();
   refresh();
 });
