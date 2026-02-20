@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>DetroitRiverJigger</title>
+  <meta name="theme-color" content="#0b1320" />
+  <link rel="manifest" href="manifest.json" />
+  <style>
+    :root{
+      --bg:#0e1b1a;        /* deep river green */
+      --card:#142625;      /* dark evergreen */
+      --text:#eef5f2;      /* soft off-white */
+      --muted:#b7c9c3;     /* misty green-gray */
+      --ok:#78c6a3;        /* seafoam */
+      --warn:#d9c37b;      /* sand */
+      --bad:#d28b7c;       /* clay */
+    }
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);}
+    .wrap{max-width:720px;margin:0 auto;padding:16px 14px 28px;}
+    h1{font-size:20px;margin:8px 0 2px;}
+    .sub{color:var(--muted);font-size:13px;margin:0 0 14px;}
+    .grid{display:grid;grid-template-columns:1fr;gap:10px;}
+    .card{background:var(--card);border-radius:14px;padding:14px;box-shadow:0 8px 28px rgba(0,0,0,.28);}
+    .k{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em;}
+    .v{font-size:22px;margin-top:6px;}
+    .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;}
+    .pill{background:rgba(255,255,255,.07);padding:8px 10px;border-radius:999px;font-size:13px;}
+    .note{font-size:13px;color:var(--muted);margin-top:10px;line-height:1.35;}
+    button{appearance:none;border:0;border-radius:12px;background:#2b5d57;color:var(--text);padding:10px 12px;font-weight:700;}
+    button:active{transform:translateY(1px);}
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+    .small{font-size:12px;color:var(--muted);}
+    .status{font-weight:700;}
+    .status.ok{color:var(--ok);} .status.warn{color:var(--warn);} .status.bad{color:var(--bad);}
+    a{color:#8fd3c1}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div>
+        <h1>DetroitRiverJigger</h1>
+        <p class="sub">Detroit River • Build <b><span id="buildTag">—</span></b></p>
+      </div>
+      <div style="text-align:right">
+        <button id="refresh">Refresh</button>
+        <div class="small" id="updated">—</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="k">Water temp (NOAA LEZ444)</div>
+        <div class="v" id="temp">—</div>
+        <div class="note" id="tempSource">—</div>
+      </div>
+      <div class="card">
+        <div class="k">Air temp (NWS hourly)</div>
+        <div class="v" id="airTemp">—</div>
+        <div class="note">Current temperature at Riverside Park forecast point.</div>
+      </div>
+
+      <div class="card" id="modeCard">
+        <div class="k">Mode</div>
+        <div class="row" style="margin-top:10px;">
+          <div class="pill" style="padding:10px 12px;">
+            <label style="display:flex;gap:10px;align-items:center;">
+              <span style="min-width:70px;">Mode</span>
+              <select id="modeSelect" style="background:rgba(255,255,255,.06);border:0;border-radius:10px;color:var(--text);padding:8px 10px;">
+                <option value="shore">Shore</option>
+                <option value="boat">Boat</option>
+              </select>
+            </label>
+          </div>
+          <div class="pill" style="padding:10px 12px;flex:1;">
+            <div class="small">Forecast point</div>
+            <div style="font-weight:700;margin-top:4px;" id="forecastPoint">—</div>
+          </div>
+        </div>
+
+        <div id="boatControls" style="display:none;margin-top:10px;">
+          <div class="row">
+            <div class="pill" style="padding:10px 12px;">
+              <label style="display:flex;gap:10px;align-items:center;">
+                <span style="min-width:70px;">Boat spot</span>
+                <select id="boatPreset" style="background:rgba(255,255,255,.06);border:0;border-radius:10px;color:var(--text);padding:8px 10px;">
+                  <option value="custom">Custom</option>
+                  <option value="belleisle">Belle Isle</option>
+                  <option value="fortwayne">Fort Wayne</option>
+                  <option value="trenton">Trenton Channel</option>
+                  <option value="grosseile">Grosse Ile</option>
+                </select>
+              </label>
+            </div>
+            <div class="pill" style="padding:10px 12px;flex:1;">
+              <label style="display:flex;gap:10px;align-items:center;">
+                <span style="min-width:50px;">Name</span>
+                <input id="boatName" placeholder="Boat point" style="width:100%;background:rgba(255,255,255,.06);border:0;border-radius:10px;color:var(--text);padding:8px 10px;" />
+              </label>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="pill" style="padding:10px 12px;">
+              <label style="display:flex;gap:10px;align-items:center;">
+                <span style="min-width:70px;">Lat</span>
+                <input id="boatLat" inputmode="decimal" style="width:140px;background:rgba(255,255,255,.06);border:0;border-radius:10px;color:var(--text);padding:8px 10px;" />
+              </label>
+            </div>
+            <div class="pill" style="padding:10px 12px;">
+              <label style="display:flex;gap:10px;align-items:center;">
+                <span style="min-width:70px;">Lon</span>
+                <input id="boatLon" inputmode="decimal" style="width:140px;background:rgba(255,255,255,.06);border:0;border-radius:10px;color:var(--text);padding:8px 10px;" />
+              </label>
+            </div>
+            <div class="pill" style="padding:10px 12px;">
+              <button id="applyBoat">Apply</button>
+            </div>
+          </div>
+
+          <div class="note">Boat mode changes the NWS hourly forecast point (wind, temp, precip). Water temp stays LEZ444. USGS flow/turbidity remain the same gauges.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="k">Wind forecast (NWS hourly • Riverside Park point)</div>
+        <div class="row">
+          <div class="pill">AM wind: <span id="windAM">—</span></div>
+          <div class="pill">AM wx: <span id="wxAM">—</span></div>
+          <div class="pill">AM precip: <span id="pcpAM">—</span></div>
+        </div>
+        <div class="row">
+          <div class="pill">PM wind: <span id="windPM">—</span></div>
+          <div class="pill">PM wx: <span id="wxPM">—</span></div>
+          <div class="pill">PM precip: <span id="pcpPM">—</span></div>
+        </div>
+        <div class="note" id="windSource">—</div>
+      </div>
+
+      <div class="card">
+        <div class="k">Water clarity signal (USGS)</div>
+        <div class="row">
+          <div class="pill">Turbidity: <span id="turb">—</span></div>
+          <div class="pill">Flow: <span id="flow">—</span></div>
+        </div>
+        <div class="note"><span class="status" id="clarityStatus">—</span> — <span id="clarityMeaning">—</span></div>
+        <div class="note" id="usgsSource">—</div>
+      </div>
+
+      
+      <div class="card">
+        <div class="k">Hourly precipitation chance (next 24h • NWS hourly)</div>
+        <div id="precipChart" style="display:flex;align-items:flex-end;gap:4px;height:88px;margin-top:10px;"></div>
+        <div class="note" style="margin-top:8px;">Tap Refresh for latest. Bars show % chance (0–100).</div>
+        <div id="precipList" class="note" style="margin-top:8px;"></div>
+      </div>
+
+      
+      <div class="card" id="lureCard">
+        <div class="k">Lure color suggestion</div>
+        <div class="v" id="lureSuggestion">—</div>
+        <div class="note" id="lureWhy">—</div>
+      </div>
+
+      <div class="card" id="jigCard">
+        <div class="k">Recommended jig weight</div>
+        <div class="v" id="jigWeight">—</div>
+        <div class="note" id="jigWhy">—</div>
+      </div>
+
+
+
+      <div class="card" id="turbRef">
+        <div class="k">Turbidity reference (NTU → water clarity)</div>
+        <div class="note" style="margin-top:8px;line-height:1.45;">
+          <div><b>&lt; 5 NTU</b> — Very clear (subtle/natural, longer casts)</div>
+          <div><b>5–15 NTU</b> — Slight stain (ideal jig conditions)</div>
+          <div><b>15–30 NTU</b> — Stained (prime walleye water; brighter colors)</div>
+          <div><b>&gt; 30 NTU</b> — Muddy (slow down; bigger profile; tight to bottom)</div>
+        </div>
+        <div class="note" style="margin-top:10px;">
+          Current: <b><span id="turbRefCurrent">—</span></b> • <span id="turbRefLabel">—</span>
+        </div>
+      </div>
+
+</div>
+
+    <p class="note" style="margin-top:14px;">
+      This app expects a small proxy endpoint to avoid CORS issues for NOAA TGFTP and to standardize parsing.
+      See <b>README</b> for one-click deployment options (Cloudflare Worker + Pages).
+    </p>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
+
+    function wireControls(){
+      const modeSelect = document.getElementById("modeSelect");
+      const boatControls = document.getElementById("boatControls");
+      const boatPreset = document.getElementById("boatPreset");
+      const boatName = document.getElementById("boatName");
+      const boatLat = document.getElementById("boatLat");
+      const boatLon = document.getElementById("boatLon");
+      const applyBoat = document.getElementById("applyBoat");
+      if (!modeSelect) return;
+
+      const presets = {
+        belleisle: {name:"Belle Isle", lat:42.3390, lon:-82.9800},
+        fortwayne: {name:"Fort Wayne", lat:42.3006, lon:-83.0935},
+        trenton: {name:"Trenton Channel", lat:42.1380, lon:-83.2200},
+        grosseile: {name:"Grosse Ile", lat:42.1296, lon:-83.1450},
+        custom: null
+      };
+
+      function applyUIFromSettings(){
+        const s = loadSettings();
+        modeSelect.value = s.mode;
+        boatControls.style.display = (s.mode === "boat") ? "block" : "none";
+        if (boatPreset) boatPreset.value = s.boatPreset || "custom";
+        if (boatName) boatName.value = s.boatName || "";
+        if (boatLat) boatLat.value = String(s.boatLat ?? "");
+        if (boatLon) boatLon.value = String(s.boatLon ?? "");
+      }
+
+      modeSelect.addEventListener("change", ()=>{
+        const s = loadSettings();
+        s.mode = modeSelect.value === "boat" ? "boat" : "shore";
+        saveSettings(s);
+        boatControls.style.display = (s.mode === "boat") ? "block" : "none";
+      });
+
+      if (boatPreset){
+        boatPreset.addEventListener("change", ()=>{
+          const key = boatPreset.value;
+          const p = presets[key];
+          const s = loadSettings();
+          s.boatPreset = key;
+          if (p){
+            s.boatName = p.name;
+            s.boatLat = p.lat;
+            s.boatLon = p.lon;
+          }
+          saveSettings(s);
+          applyUIFromSettings();
+        });
+      }
+
+      if (applyBoat){
+        applyBoat.addEventListener("click", ()=>{
+          const s = loadSettings();
+          s.mode = modeSelect.value === "boat" ? "boat" : "shore";
+          s.boatPreset = boatPreset ? boatPreset.value : "custom";
+          s.boatName = (boatName && boatName.value) ? boatName.value : (s.boatName || "Boat point");
+          s.boatLat = boatLat ? Number(boatLat.value) : s.boatLat;
+          s.boatLon = boatLon ? Number(boatLon.value) : s.boatLon;
+          saveSettings(s);
+          // refresh with new parameters
+          document.getElementById("refresh")?.click();
+        });
+      }
+
+      applyUIFromSettings();
+    }
+
+    window.addEventListener("load", wireControls);
+  </script>
+</body>
+</html>
